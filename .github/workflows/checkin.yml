@@ -1,56 +1,30 @@
-name: GLaDOS 2026 Checkin
+name: GLaDOS Daily Check-in
 
 on:
   schedule:
-    # 北京时间 09:30（UTC 01:30）。一天一次即可，脚本会在失败时自动重试。
-    - cron: '30 1 * * *'
+    - cron: "30 1 * * *"
   workflow_dispatch:
-    inputs:
-      dispatch_source:
-        description: 手动运行请选择 manual；外部定时器填写 external
-        required: true
-        type: choice
-        options:
-          - manual
-          - external
-
-concurrency:
-  group: glados-checkin
-  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
   checkin:
-    if: github.event_name == 'schedule' || inputs.dispatch_source == 'manual' || inputs.dispatch_source == 'external'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
 
-      - name: Install Dependencies
-        run: python -m pip install -r requirements.txt
-
-      - name: Run Tests
-        run: python -m unittest discover -s tests -v
-
-      - name: Run Checkin
-        run: python checkin.py
-        timeout-minutes: 8
+      - name: Run GLaDOS check-in
         env:
           GLADOS_COOKIE: ${{ secrets.GLADOS_COOKIE }}
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          PUSH_LEVEL: ${{ vars.PUSH_LEVEL || 'fail_only' }}
-          CHECKIN_MAX_ATTEMPTS: '3'
-          CHECKIN_RETRY_DELAY_SECONDS: '60'
+          GLADOS_TOKEN: ${{ secrets.GLADOS_TOKEN }}
+        run: |
+          python checkin.py
